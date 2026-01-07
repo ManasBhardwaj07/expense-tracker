@@ -1,48 +1,56 @@
 package com.expensetracker.backend.controller;
 
 import com.expensetracker.backend.model.Income;
-import com.expensetracker.backend.model.User;
+import com.expensetracker.backend.model.enums.IncomeSource;
 import com.expensetracker.backend.service.IncomeService;
-import com.expensetracker.backend.service.UserService;
-import org.springframework.http.HttpStatus;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/income")
+@RequestMapping("/incomes")
 public class IncomeController {
 
     private final IncomeService incomeService;
-    private final UserService userService;
 
-    public IncomeController(IncomeService incomeService, UserService userService) {
+    public IncomeController(IncomeService incomeService) {
         this.incomeService = incomeService;
-        this.userService = userService;
     }
 
-    @PostMapping("/user/{userId}")
-    public ResponseEntity<Income> addIncome(
+    @PostMapping("/{userId}")
+    public ResponseEntity<Income> createIncome(
             @PathVariable Long userId,
-            @RequestBody Income income) {
-
-        User user = userService.getUserById(userId);
-        income.setUser(user);
-
-        Income saved = incomeService.addIncome(income);
-        return new ResponseEntity<>(saved, HttpStatus.CREATED);
+            @RequestBody Income income
+    ) {
+        return ResponseEntity.ok(incomeService.createIncome(userId, income));
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Income>> getIncome(@PathVariable Long userId) {
-        User user = userService.getUserById(userId);
-        return ResponseEntity.ok(incomeService.getIncomeByUser(user));
+    public ResponseEntity<List<Income>> getByUser(
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(incomeService.getByUser(userId));
     }
 
-    @DeleteMapping("/{incomeId}")
-    public ResponseEntity<Void> deleteIncome(@PathVariable Long incomeId) {
-        incomeService.deleteIncome(incomeId);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/user/{userId}/source/{source}")
+    public ResponseEntity<List<Income>> getBySource(
+            @PathVariable Long userId,
+            @PathVariable IncomeSource source
+    ) {
+        return ResponseEntity.ok(incomeService.getBySource(userId, source));
+    }
+
+    @GetMapping("/user/{userId}/date")
+    public ResponseEntity<List<Income>> getByDateRange(
+            @PathVariable Long userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        return ResponseEntity.ok(
+                incomeService.getByDateRange(userId, from, to)
+        );
     }
 }
