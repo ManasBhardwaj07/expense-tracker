@@ -3,6 +3,7 @@ package com.expensetracker.backend.controller;
 import com.expensetracker.backend.dto.UserResponseDTO;
 import com.expensetracker.backend.model.User;
 import com.expensetracker.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,9 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@RequestBody User user) {
+    public ResponseEntity<UserResponseDTO> createUser(
+            @Valid @RequestBody User user
+    ) {
         User createdUser = userService.createUser(user);
 
         UserResponseDTO response = new UserResponseDTO(
@@ -29,6 +32,7 @@ public class UserController {
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+
 
 
     @GetMapping("/{id}")
