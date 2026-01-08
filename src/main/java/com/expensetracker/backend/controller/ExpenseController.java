@@ -2,19 +2,18 @@ package com.expensetracker.backend.controller;
 
 import com.expensetracker.backend.dto.ExpenseResponseDTO;
 import com.expensetracker.backend.model.Expense;
-import com.expensetracker.backend.model.enums.ExpenseCategory;
 import com.expensetracker.backend.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/users/{userId}/expenses")
+@RequestMapping("/expenses")
 public class ExpenseController {
 
     private final ExpenseService expenseService;
@@ -23,59 +22,79 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
-    // 1️⃣ Create Expense
+    // =========================
+    // CREATE
+    // =========================
     @PostMapping
     public ResponseEntity<ExpenseResponseDTO> createExpense(
-            @PathVariable Long userId,
             @Valid @RequestBody Expense expense
     ) {
+        Long userId = getCurrentUserId();
+
         Expense created = expenseService.createExpense(userId, expense);
-        return new ResponseEntity<>(mapToDTO(created), HttpStatus.CREATED);
+
+        return new ResponseEntity<>(
+                toDTO(created),
+                HttpStatus.CREATED
+        );
     }
 
-    // 2️⃣ Get all expenses of a user
+    // =========================
+    // READ (all by user)
+    // =========================
     @GetMapping
-    public ResponseEntity<List<ExpenseResponseDTO>> getExpenses(
-            @PathVariable Long userId
-    ) {
-        List<ExpenseResponseDTO> response = expenseService
-                .getExpensesByUser(userId)
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public ResponseEntity<List<ExpenseResponseDTO>> getExpenses() {
+
+        Long userId = getCurrentUserId();
+
+        List<ExpenseResponseDTO> response =
+                expenseService.getExpensesByUser(userId)
+                        .stream()
+                        .map(this::toDTO)
+                        .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);
     }
 
-    // 3️⃣ Filter expenses
-    @GetMapping("/filter")
-    public ResponseEntity<List<ExpenseResponseDTO>> filterExpenses(
-            @PathVariable Long userId,
-            @RequestParam(required = false) ExpenseCategory category,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate
+    // =========================
+    // UPDATE
+    // =========================
+    @PutMapping("/{id}")
+    public ResponseEntity<ExpenseResponseDTO> updateExpense(
+            @PathVariable Long id,
+            @Valid @RequestBody Expense expense
     ) {
+        Long userId = getCurrentUserId();
 
-        List<Expense> expenses;
+        Expense updated =
+                expenseService.updateExpense(id, userId, expense);
 
-        if (category != null) {
-            expenses = expenseService.getExpensesByCategory(userId, category);
-        } else if (startDate != null && endDate != null) {
-            expenses = expenseService.getExpensesByDateRange(userId, startDate, endDate);
-        } else {
-            return ResponseEntity.badRequest().build();
-        }
-
-        List<ExpenseResponseDTO> response = expenses
-                .stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(toDTO(updated));
     }
 
-    // 🔒 Private mapper (controller responsibility)
-    private ExpenseResponseDTO mapToDTO(Expense expense) {
+    // =========================
+    // DELETE
+    // =========================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteExpense(@PathVariable Long id) {
+
+        Long userId = getCurrentUserId();
+        expenseService.deleteExpense(id, userId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    // =========================
+    // HELPERS
+    // =========================
+    private Long getCurrentUserId() {
+        return (Long) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+    }
+
+    private ExpenseResponseDTO toDTO(Expense expense) {
         return new ExpenseResponseDTO(
                 expense.getId(),
                 expense.getDescription(),

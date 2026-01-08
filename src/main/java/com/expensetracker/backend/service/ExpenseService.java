@@ -70,4 +70,34 @@ public class ExpenseService {
                         new IllegalArgumentException("User not found with id: " + userId)
                 );
     }
+    public Expense updateExpense(Long expenseId, Long userId, Expense updatedExpense) {
+
+        Expense existing = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new IllegalArgumentException("Expense not found"));
+
+        if (!existing.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access");
+        }
+
+        existing.setDescription(updatedExpense.getDescription());
+        existing.setAmount(updatedExpense.getAmount());
+        existing.setCategory(updatedExpense.getCategory());
+        existing.setDate(updatedExpense.getDate());
+
+        return expenseRepository.save(existing);
+    }
+
+    public void deleteExpense(Long expenseId, Long userId) {
+
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new IllegalArgumentException("Expense not found"));
+
+        if (!expense.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access");
+        }
+
+        expenseRepository.delete(expense);
+    }
+
+
 }
