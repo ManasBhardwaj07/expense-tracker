@@ -2,37 +2,27 @@ package com.expensetracker.backend.model;
 
 import com.expensetracker.backend.model.enums.ExpenseCategory;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "expenses")
-@Getter
-@Setter
-@NoArgsConstructor
 public class Expense {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String description;
-
-
-    @DecimalMin(value = "0.01", inclusive = true)
-    @Column(nullable = false, precision = 12, scale = 2)
+    @NotNull
+    @Positive
+    @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal amount;
 
+    @Column(nullable = false)
+    private String description;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -43,15 +33,59 @@ public class Expense {
     @Column(nullable = false)
     private LocalDate date;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public Expense(String description,BigDecimal amount,ExpenseCategory category,LocalDate date,User user) {
-        this.description = description;
+    // =========================
+    // GETTERS & SETTERS
+    // =========================
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public ExpenseCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(ExpenseCategory category) {
         this.category = category;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
         this.date = date;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
         this.user = user;
     }
 }

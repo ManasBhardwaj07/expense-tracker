@@ -1,6 +1,7 @@
 package com.expensetracker.backend.service;
 
 import com.expensetracker.backend.model.Income;
+import com.expensetracker.backend.model.User;
 import com.expensetracker.backend.model.enums.IncomeSource;
 import com.expensetracker.backend.repository.IncomeRepository;
 import com.expensetracker.backend.repository.UserRepository;
@@ -23,23 +24,104 @@ public class IncomeService {
         this.userRepository = userRepository;
     }
 
+    // =========================
+    // CREATE
+    // =========================
     public Income createIncome(Long userId, Income income) {
-        income.setUser(
-                userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalArgumentException("User not found"))
-        );
+
+        User user = getUserOrFail(userId);
+
+        income.setId(null);          // enforce new entity
+        income.setUser(user);
+
         return incomeRepository.save(income);
     }
 
-    public List<Income> getByUser(Long userId) {
+    // =========================
+    // READ (ALL BY USER)
+    // =========================
+    public List<Income> getIncomesByUser(Long userId) {
         return incomeRepository.findByUserId(userId);
     }
 
-    public List<Income> getBySource(Long userId, IncomeSource source) {
+    // =========================
+    // FILTER BY SOURCE
+    // =========================
+    public List<Income> getIncomesBySource(
+            Long userId,
+            IncomeSource source
+    ) {
         return incomeRepository.findByUserIdAndSource(userId, source);
     }
 
-    public List<Income> getByDateRange(Long userId, LocalDate from, LocalDate to) {
-        return incomeRepository.findByUserIdAndDateBetween(userId, from, to);
+    // =========================
+    // FILTER BY DATE RANGE
+    // =========================
+    public List<Income> getIncomesByDateRange(
+            Long userId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        return incomeRepository.findByUserIdAndDateBetween(
+                userId,
+                startDate,
+                endDate
+        );
+    }
+
+    // =========================
+    // UPDATE
+    // =========================
+    public Income updateIncome(
+            Long incomeId,
+            Long userId,
+            Income updatedIncome
+    ) {
+        Income existing = incomeRepository.findById(incomeId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Income not found")
+                );
+
+        if (!existing.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access");
+        }
+
+        existing.setAmount(updatedIncome.getAmount());
+        existing.setSource(updatedIncome.getSource());
+        existing.setDescription(updatedIncome.getDescription());
+        existing.setDate(updatedIncome.getDate());
+
+        return incomeRepository.save(existing);
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    public void deleteIncome(Long incomeId, Long userId) {
+
+        Income income = incomeRepository.findById(incomeId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Income not found")
+                );
+
+        if (!income.getUser().getId().equals(userId)) {
+            throw new SecurityException("Unauthorized access");
+        }
+
+        incomeRepository.delete(income);
+    }
+
+    // =========================
+    // INTERNAL HELPER
+    // =========================
+    private User getUserOrFail(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found with id: " + userId)
+                );
     }
 }

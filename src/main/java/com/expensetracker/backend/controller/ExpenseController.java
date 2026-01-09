@@ -2,6 +2,7 @@ package com.expensetracker.backend.controller;
 
 import com.expensetracker.backend.dto.ExpenseResponseDTO;
 import com.expensetracker.backend.model.Expense;
+import com.expensetracker.backend.model.enums.ExpenseCategory;
 import com.expensetracker.backend.service.ExpenseService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,7 +42,7 @@ public class ExpenseController {
     }
 
     // =========================
-    // READ (all by user)
+    // READ (ALL BY USER)
     // =========================
     @GetMapping
     public ResponseEntity<List<ExpenseResponseDTO>> getExpenses() {
@@ -82,6 +84,47 @@ public class ExpenseController {
         expenseService.deleteExpense(id, userId);
 
         return ResponseEntity.noContent().build();
+    }
+
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<ExpenseResponseDTO>> filterExpenses(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false, defaultValue = "date") String sortBy
+    ) {
+        Long userId = getCurrentUserId();
+
+        List<Expense> expenses;
+
+        if (category != null) {
+            expenses = expenseService.getExpensesByCategory(
+                    userId,
+                    ExpenseCategory.valueOf(category)
+            );
+        } else if (startDate != null && endDate != null) {
+            expenses = expenseService.getExpensesByDateRange(
+                    userId,
+                    LocalDate.parse(startDate),
+                    LocalDate.parse(endDate)
+            );
+        } else {
+            expenses = expenseService.getExpensesByUser(userId);
+        }
+
+        expenses.sort((a, b) -> {
+            if ("amount".equalsIgnoreCase(sortBy)) {
+                return a.getAmount().compareTo(b.getAmount());
+            }
+            return a.getDate().compareTo(b.getDate());
+        });
+
+        return ResponseEntity.ok(
+                expenses.stream()
+                        .map(this::toDTO)
+                        .collect(Collectors.toList())
+        );
     }
 
     // =========================

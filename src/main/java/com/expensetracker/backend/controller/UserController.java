@@ -18,25 +18,30 @@ public class UserController {
         this.userService = userService;
     }
 
+    // =========================
+    // CREATE USER (PUBLIC)
+    // =========================
     @PostMapping
     public ResponseEntity<UserResponseDTO> createUser(
             @Valid @RequestBody User user
     ) {
-        User createdUser = userService.createUser(user);
+        User created = userService.createUser(user);
 
         UserResponseDTO response = new UserResponseDTO(
-                createdUser.getId(),
-                createdUser.getName(),
-                createdUser.getEmail()
+                created.getId(),
+                created.getName(),
+                created.getEmail()
         );
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-
-
+    // =========================
+    // GET USER BY ID (PROTECTED)
+    // =========================
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long id) {
+
         User user = userService.getUserById(id);
 
         UserResponseDTO response = new UserResponseDTO(
@@ -47,5 +52,4 @@ public class UserController {
 
         return ResponseEntity.ok(response);
     }
-
 }

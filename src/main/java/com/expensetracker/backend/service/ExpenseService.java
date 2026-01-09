@@ -24,21 +24,29 @@ public class ExpenseService {
         this.userRepository = userRepository;
     }
 
-    // Create expense for a user
+    // =========================
+    // CREATE
+    // =========================
     public Expense createExpense(Long userId, Expense expense) {
 
         User user = getUserOrFail(userId);
+
+        expense.setId(null);          // enforce new entity
         expense.setUser(user);
 
         return expenseRepository.save(expense);
     }
 
-    // Get all expenses of a user
+    // =========================
+    // READ (ALL BY USER)
+    // =========================
     public List<Expense> getExpensesByUser(Long userId) {
         return expenseRepository.findByUserId(userId);
     }
 
-    // Filter by category
+    // =========================
+    // FILTER BY CATEGORY
+    // =========================
     public List<Expense> getExpensesByCategory(
             Long userId,
             ExpenseCategory category
@@ -46,7 +54,9 @@ public class ExpenseService {
         return expenseRepository.findByUserIdAndCategory(userId, category);
     }
 
-    // Filter by date range
+    // =========================
+    // FILTER BY DATE RANGE
+    // =========================
     public List<Expense> getExpensesByDateRange(
             Long userId,
             LocalDate startDate,
@@ -63,17 +73,18 @@ public class ExpenseService {
         );
     }
 
-    // Internal helper
-    private User getUserOrFail(Long userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException("User not found with id: " + userId)
-                );
-    }
-    public Expense updateExpense(Long expenseId, Long userId, Expense updatedExpense) {
-
+    // =========================
+    // UPDATE
+    // =========================
+    public Expense updateExpense(
+            Long expenseId,
+            Long userId,
+            Expense updatedExpense
+    ) {
         Expense existing = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new IllegalArgumentException("Expense not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Expense not found")
+                );
 
         if (!existing.getUser().getId().equals(userId)) {
             throw new SecurityException("Unauthorized access");
@@ -87,10 +98,15 @@ public class ExpenseService {
         return expenseRepository.save(existing);
     }
 
+    // =========================
+    // DELETE
+    // =========================
     public void deleteExpense(Long expenseId, Long userId) {
 
         Expense expense = expenseRepository.findById(expenseId)
-                .orElseThrow(() -> new IllegalArgumentException("Expense not found"));
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Expense not found")
+                );
 
         if (!expense.getUser().getId().equals(userId)) {
             throw new SecurityException("Unauthorized access");
@@ -99,5 +115,13 @@ public class ExpenseService {
         expenseRepository.delete(expense);
     }
 
-
+    // =========================
+    // INTERNAL HELPER
+    // =========================
+    private User getUserOrFail(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("User not found with id: " + userId)
+                );
+    }
 }

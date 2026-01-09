@@ -1,9 +1,6 @@
 package com.expensetracker.backend.dto;
 
 import com.expensetracker.backend.model.enums.ExpenseCategory;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +27,10 @@ public class ExpenseResponseDTO {
         this.date = date;
     }
 
+    // =========================
+    // GETTERS
+    // =========================
+
     public Long getId() {
         return id;
     }
@@ -48,16 +49,5 @@ public class ExpenseResponseDTO {
 
     public LocalDate getDate() {
         return date;
-    }
-
-    @Getter
-    @Setter
-    public static class LoginRequestDTO {
-
-        @NotBlank
-        private String email;
-
-        @NotBlank
-        private String password;
     }
 }

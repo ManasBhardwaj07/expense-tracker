@@ -1,19 +1,22 @@
 package com.expensetracker.backend.auth.util;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24; // 24 hours
+    // 24 hours
+    private static final long EXPIRATION_TIME = 24 * 60 * 60 * 1000;
 
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    // Stable secret key (do NOT change once users exist)
+    private final SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
     public String generateToken(Long userId) {
         return Jwts.builder()
@@ -24,26 +27,24 @@ public class JwtUtil {
                 .compact();
     }
 
-    public Long extractUserId(String token) {
-        return Long.parseLong(
-                Jwts.parserBuilder()
-                        .setSigningKey(key)
-                        .build()
-                        .parseClaimsJws(token)
-                        .getBody()
-                        .getSubject()
-        );
-    }
-
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token);
+            getClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (Exception ex) {
             return false;
         }
+    }
+
+    public Long extractUserId(String token) {
+        return Long.parseLong(getClaims(token).getSubject());
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

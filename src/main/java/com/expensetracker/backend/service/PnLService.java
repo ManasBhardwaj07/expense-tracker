@@ -5,36 +5,35 @@ import com.expensetracker.backend.repository.IncomeRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 
 @Service
 public class PnLService {
 
-    private final ExpenseRepository expenseRepository;
     private final IncomeRepository incomeRepository;
+    private final ExpenseRepository expenseRepository;
 
     public PnLService(
-            ExpenseRepository expenseRepository,
-            IncomeRepository incomeRepository
+            IncomeRepository incomeRepository,
+            ExpenseRepository expenseRepository
     ) {
-        this.expenseRepository = expenseRepository;
         this.incomeRepository = incomeRepository;
+        this.expenseRepository = expenseRepository;
     }
 
-    public BigDecimal calculatePnL(
-            Long userId,
-            LocalDate from,
-            LocalDate to
-    ) {
-        if (from.isAfter(to)) {
-            throw new IllegalArgumentException("From date cannot be after To date");
-        }
+    // =========================
+    // TOTAL PROFIT & LOSS
+    // =========================
+    public BigDecimal calculateTotalPnL(Long userId) {
 
-        BigDecimal totalIncome =
-                incomeRepository.getTotalIncomeByUserId(userId, from, to);
+        BigDecimal totalIncome = incomeRepository.findByUserId(userId)
+                .stream()
+                .map(income -> income.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal totalExpense =
-                expenseRepository.getTotalExpenseByUserId(userId, from, to);
+        BigDecimal totalExpense = expenseRepository.findByUserId(userId)
+                .stream()
+                .map(expense -> expense.getAmount())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         return totalIncome.subtract(totalExpense);
     }

@@ -1,12 +1,11 @@
 package com.expensetracker.backend.controller;
 
 import com.expensetracker.backend.service.PnLService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Map;
 
 @RestController
@@ -19,13 +18,28 @@ public class PnLController {
         this.pnlService = pnlService;
     }
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<Map<String, BigDecimal>> getPnL(
-            @PathVariable Long userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
-    ) {
-        BigDecimal pnl = pnlService.calculatePnL(userId, from, to);
-        return ResponseEntity.ok(Map.of("pnl", pnl));
+    // =========================
+    // GET TOTAL PnL
+    // =========================
+    @GetMapping
+    public ResponseEntity<Map<String, BigDecimal>> getTotalPnL() {
+
+        Long userId = getCurrentUserId();
+
+        BigDecimal pnl = pnlService.calculateTotalPnL(userId);
+
+        return ResponseEntity.ok(
+                Map.of("totalPnL", pnl)
+        );
+    }
+
+    // =========================
+    // HELPER
+    // =========================
+    private Long getCurrentUserId() {
+        return (Long) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
     }
 }

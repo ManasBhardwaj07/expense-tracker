@@ -27,9 +27,27 @@ public class IncomeResponseDTO {
         this.date = date;
     }
 
-    public Long getId() { return id; }
-    public String getDescription() { return description; }
-    public BigDecimal getAmount() { return amount; }
-    public IncomeSource getSource() { return source; }
-    public LocalDate getDate() { return date; }
+    // =========================
+    // GETTERS
+    // =========================
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public IncomeSource getSource() {
+        return source;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
 }

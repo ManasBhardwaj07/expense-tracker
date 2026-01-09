@@ -19,11 +19,18 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    // =========================
+    // CREATE USER
+    // =========================
     public User createUser(User user) {
+        user.setId(null); // enforce new user
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
+    // =========================
+    // GET USER BY ID
+    // =========================
     public User getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() ->
@@ -31,7 +38,11 @@ public class UserService {
                 );
     }
 
+    // =========================
+    // AUTHENTICATE USER
+    // =========================
     public User authenticate(String email, String rawPassword) {
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Invalid email or password")
